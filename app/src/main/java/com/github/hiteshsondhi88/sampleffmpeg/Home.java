@@ -49,13 +49,17 @@ public class Home extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         ButterKnife.inject(this);
-        ObjectGraph.create(new DaggerDependencyModule(this)).inject(this);
+        //ObjectGraph.create(new DaggerDependencyModule(this)).inject(this);
 
         loadFFMpegBinary();
         initUI();
     }
 
     private void initUI() {
+        commandEditText = (EditText)findViewById(R.id.command);
+        outputLayout = (LinearLayout)findViewById(R.id.command_output);
+        runButton = (Button)findViewById(R.id.run_command);
+
         runButton.setOnClickListener(this);
 
         progressDialog = new ProgressDialog(this);
@@ -64,6 +68,7 @@ public class Home extends Activity implements View.OnClickListener {
 
     private void loadFFMpegBinary() {
         try {
+            ffmpeg = FFmpeg.getInstance(getApplicationContext());
             ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
                 @Override
                 public void onFailure() {
