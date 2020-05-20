@@ -20,9 +20,9 @@ class FFmpegLoadLibraryAsyncTask extends AsyncTask<Void, Void, Boolean> {
     @Override
     protected Boolean doInBackground(Void... params) {
         File ffmpegFile = new File(FileUtils.getFFmpeg(context));
-        if (ffmpegFile.exists() && isDeviceFFmpegVersionOld() && !ffmpegFile.delete()) {
-            return false;
-        }
+//        if (ffmpegFile.exists() && isDeviceFFmpegVersionOld() && !ffmpegFile.delete()) {
+//            return false;
+//        }
         if (!ffmpegFile.exists()) {
             boolean isFileCopied = FileUtils.copyBinaryFromAssetsToData(context,
                     cpuArchNameFromAssets + File.separator + FileUtils.ffmpegFileName,
@@ -41,6 +41,8 @@ class FFmpegLoadLibraryAsyncTask extends AsyncTask<Void, Void, Boolean> {
                 }
             }
         }
+
+        ffmpegFile.setExecutable(true);
         return ffmpegFile.exists() && ffmpegFile.canExecute();
     }
 

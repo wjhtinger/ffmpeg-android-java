@@ -26,6 +26,13 @@ import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Home extends Activity implements View.OnClickListener {
 
     private static final String TAG = Home.class.getSimpleName();
@@ -51,8 +58,25 @@ public class Home extends Activity implements View.OnClickListener {
         ButterKnife.inject(this);
         //ObjectGraph.create(new DaggerDependencyModule(this)).inject(this);
 
+        prepareWelt();
         loadFFMpegBinary();
         initUI();
+    }
+
+    private void prepareWelt()
+    {   String innerPath = getFilesDir().getAbsolutePath();
+        Log.e(TAG, "#########:" + innerPath);
+        String meltFilePath = innerPath + "/mlt/bin/melt";
+        File ffmpegFile = new File(meltFilePath);
+        if(ffmpegFile.exists()){
+            return;
+        }
+
+        try {
+            CopyAssetsUtil.copyAssets(this, "mlt", innerPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void initUI() {
@@ -64,6 +88,8 @@ public class Home extends Activity implements View.OnClickListener {
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(null);
+
+        commandEditText.setText("avformat:/sdcard/123456789/NORM0128.MP4 -filter greyscale in=0 out=150 -consumer avformat:/sdcard/123456789/output.avi");
     }
 
     private void loadFFMpegBinary() {
@@ -81,8 +107,15 @@ public class Home extends Activity implements View.OnClickListener {
     }
 
     private void execFFmpegBinary(final String[] command) {
+        Map<String, String> envMaps = new HashMap<>();
+        String innerPath = getFilesDir().getAbsolutePath();
+        String envLd = innerPath + "/mlt/lib";
+        String envMr = innerPath + "/mlt/lib/mlt";
+        envMaps.put("LD_LIBRARY_PATH", envLd);
+        envMaps.put("MLT_REPOSITORY", envMr);
+
         try {
-            ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
+            ffmpeg.execute(envMaps, command, new ExecuteBinaryResponseHandler() {
                 @Override
                 public void onFailure(String s) {
                     addTextViewToLayout("FAILED with output : "+s);

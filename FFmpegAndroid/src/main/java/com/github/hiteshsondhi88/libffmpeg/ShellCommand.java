@@ -4,18 +4,18 @@ import java.io.IOException;
 
 class ShellCommand {
 
-    Process run(String[] commandString) {
+    Process run(String[] commandString, String[] envString) {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(commandString);
+            process = Runtime.getRuntime().exec(commandString, envString);
         } catch (IOException e) {
             Log.e("Exception while trying to run: " + commandString, e);
         }
         return process;
     }
 
-    CommandResult runWaitFor(String[] s) {
-        Process process = run(s);
+    CommandResult runWaitFor(String[] s, String[] es) {
+        Process process = run(s, es);
 
         Integer exitValue = null;
         String output = null;

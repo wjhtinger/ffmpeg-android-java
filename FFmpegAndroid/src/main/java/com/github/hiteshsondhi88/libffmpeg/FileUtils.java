@@ -15,7 +15,7 @@ import java.util.Map;
 
 class FileUtils {
 
-    static final String ffmpegFileName = "ffmpeg";
+    static final String ffmpegFileName = "melt";
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
     private static final int EOF = -1;
 
@@ -52,7 +52,7 @@ class FileUtils {
 	}
 
     static String getFFmpeg(Context context) {
-        return getFilesDirectory(context).getAbsolutePath() + File.separator + FileUtils.ffmpegFileName;
+        return getFilesDirectory(context).getAbsolutePath() + File.separator + "mlt/bin/" + FileUtils.ffmpegFileName;
     }
 
     static String getFFmpeg(Context context, Map<String,String> environmentVars) {

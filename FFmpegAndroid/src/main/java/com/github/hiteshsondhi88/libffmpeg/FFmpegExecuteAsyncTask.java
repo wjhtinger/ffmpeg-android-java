@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, CommandResult> {
 
     private final String[] cmd;
+    private final String[] env;
     private final FFmpegExecuteResponseHandler ffmpegExecuteResponseHandler;
     private final ShellCommand shellCommand;
     private final long timeout;
@@ -17,7 +18,8 @@ class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, CommandResult> {
     private Process process;
     private String output = "";
 
-    FFmpegExecuteAsyncTask(String[] cmd, long timeout, FFmpegExecuteResponseHandler ffmpegExecuteResponseHandler) {
+    FFmpegExecuteAsyncTask(String[] env, String[] cmd, long timeout, FFmpegExecuteResponseHandler ffmpegExecuteResponseHandler) {
+        this.env = env;
         this.cmd = cmd;
         this.timeout = timeout;
         this.ffmpegExecuteResponseHandler = ffmpegExecuteResponseHandler;
@@ -35,7 +37,7 @@ class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, CommandResult> {
     @Override
     protected CommandResult doInBackground(Void... params) {
         try {
-            process = shellCommand.run(cmd);
+            process = shellCommand.run(cmd, env);
             if (process == null) {
                 return CommandResult.getDummyFailureResponse();
             }

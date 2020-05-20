@@ -63,9 +63,18 @@ public class FFmpeg implements FFmpegInterface {
             throw new FFmpegCommandAlreadyRunningException("FFmpeg command is already running, you are only allowed to run single command at a time");
         }
         if (cmd.length != 0) {
-            String[] ffmpegBinary = new String[] { FileUtils.getFFmpeg(context, environvenmentVars) };
+            String[] env = null;
+            if (environvenmentVars != null) {
+                env = new String[environvenmentVars.size()];
+                int i = 0;
+                for (Map.Entry<String, String> var : environvenmentVars.entrySet()) {
+                    env[i++] = var.getKey()+"="+var.getValue();
+                }
+            }
+
+            String[] ffmpegBinary = new String[] { FileUtils.getFFmpeg(context, null) };
             String[] command = concatenate(ffmpegBinary, cmd);
-            ffmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(command , timeout, ffmpegExecuteResponseHandler);
+            ffmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(env, command, timeout, ffmpegExecuteResponseHandler);
             ffmpegExecuteAsyncTask.execute();
         } else {
             throw new IllegalArgumentException("shell command cannot be empty");
@@ -92,7 +101,7 @@ public class FFmpeg implements FFmpegInterface {
     @Override
     public String getDeviceFFmpegVersion() throws FFmpegCommandAlreadyRunningException {
         ShellCommand shellCommand = new ShellCommand();
-        CommandResult commandResult = shellCommand.runWaitFor(new String[] { FileUtils.getFFmpeg(context), "-version" });
+        CommandResult commandResult = shellCommand.runWaitFor(new String[] { FileUtils.getFFmpeg(context), "-version" }, null);
         if (commandResult.success) {
             return commandResult.output.split(" ")[2];
         }
