@@ -24,12 +24,12 @@
         android:text="@string/run"
         android:padding="@dimen/button_padding"/>
 
-    <Button
-        android:id="@+id/switch_command"
+    <ImageView
+        android:id="@+id/ImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/Switch"
-        android:padding="@dimen/button_padding"/>
+        android:layout_gravity="center"
+        android:src="@drawable/ic_launcher" />
 
     <ScrollView
         android:layout_width="match_parent"

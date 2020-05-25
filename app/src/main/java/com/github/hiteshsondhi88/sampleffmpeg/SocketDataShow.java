@@ -4,13 +4,17 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.LocalServerSocket;
+import android.net.LocalSocket;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,13 +34,15 @@ import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedExceptio
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Home extends Activity implements View.OnClickListener {
+public class SocketDataShow extends Activity implements View.OnClickListener {
 
-    private static final String TAG = Home.class.getSimpleName();
+    private static final String TAG = SocketDataShow.class.getSimpleName();
 
     @Inject
     FFmpeg ffmpeg;
@@ -49,20 +55,22 @@ public class Home extends Activity implements View.OnClickListener {
 
     @InjectView(R.id.run_command)
     Button runButton;
-    Button switchButton;
+
+    ImageView imageView;
 
     private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.activity_socket_data_show);
         ButterKnife.inject(this);
         //ObjectGraph.create(new DaggerDependencyModule(this)).inject(this);
 
         prepareWelt();
         loadFFMpegBinary();
         initUI();
+        startServer();
     }
 
     private void prepareWelt()
@@ -71,7 +79,7 @@ public class Home extends Activity implements View.OnClickListener {
         String meltFilePath = innerPath + "/mlt/bin/melt";
         File ffmpegFile = new File(meltFilePath);
         if(ffmpegFile.exists()){
-            return;
+            //return;
         }
 
         try {
@@ -85,15 +93,14 @@ public class Home extends Activity implements View.OnClickListener {
         commandEditText = (EditText)findViewById(R.id.command);
         outputLayout = (LinearLayout)findViewById(R.id.command_output);
         runButton = (Button)findViewById(R.id.run_command);
-        switchButton = (Button)findViewById(R.id.switch_command);
+        imageView = (ImageView)findViewById(R.id.ImageView) ;
 
         runButton.setOnClickListener(this);
-        switchButton.setOnClickListener(this);
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(null);
 
-        commandEditText.setText("avformat:/sdcard/123456789/NORM0128.MP4 -filter greyscale in=0 out=150 -consumer avformat:/sdcard/123456789/output.avi");
+        commandEditText.setText("avformat:/sdcard/123456789/NORM0128.MP4 -filter greyscale in=0 out=150 -consumer socket terminate_on_pause=1");
     }
 
     private void loadFFMpegBinary() {
@@ -143,7 +150,7 @@ public class Home extends Activity implements View.OnClickListener {
 
                     Log.d(TAG, "Started command : ffmpeg " + command);
                     progressDialog.setMessage("Processing...");
-                    progressDialog.show();
+                    //progressDialog.show();
                 }
 
                 @Override
@@ -158,13 +165,13 @@ public class Home extends Activity implements View.OnClickListener {
     }
 
     private void addTextViewToLayout(String text) {
-        TextView textView = new TextView(Home.this);
+        TextView textView = new TextView(SocketDataShow.this);
         textView.setText(text);
         outputLayout.addView(textView);
     }
 
     private void showUnsupportedExceptionDialog() {
-        new AlertDialog.Builder(Home.this)
+        new AlertDialog.Builder(SocketDataShow.this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle(getString(R.string.device_not_supported))
                 .setMessage(getString(R.string.device_not_supported_message))
@@ -172,7 +179,7 @@ public class Home extends Activity implements View.OnClickListener {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Home.this.finish();
+                        SocketDataShow.this.finish();
                     }
                 })
                 .create()
@@ -189,14 +196,57 @@ public class Home extends Activity implements View.OnClickListener {
                 if (command.length != 0) {
                     execFFmpegBinary(command);
                 } else {
-                    Toast.makeText(Home.this, getString(R.string.empty_command_toast), Toast.LENGTH_LONG).show();
+                    Toast.makeText(SocketDataShow.this, getString(R.string.empty_command_toast), Toast.LENGTH_LONG).show();
                 }
                 break;
-
-            case R.id.switch_command:
-                Intent intent = new Intent(this,SocketDataShow.class);
-                startActivity(intent);
-                break;
         }
+    }
+
+    private void startServer(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.e(TAG, "startServer run!");
+                LocalServerSocket server = null;
+                byte[] data = new byte[1920*1080*4];
+                int readSize, index, length_tmp;
+
+                try {
+                    server = new LocalServerSocket("mlt.socket");
+                    LocalSocket receiver = server.accept();
+                    InputStream input = receiver.getInputStream();
+                    if(receiver != null){
+                        while (true){
+                            index = 0;
+                            length_tmp = 1920*1080*4;
+                            while ((readSize = input.read(data, (int) index, (int) length_tmp)) != -1) {
+                                length_tmp -= readSize;
+                                if (length_tmp == 0) {
+                                    break;
+                                }
+                                index = index + readSize;
+                            }
+
+                            Log.e(TAG, "LocalServerSocket read data:" + length_tmp);
+
+                            final Bitmap bitmap = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888);
+                            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(data));
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imageView.setImageBitmap(bitmap);
+                                }
+                            });
+                        }
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+
     }
 }

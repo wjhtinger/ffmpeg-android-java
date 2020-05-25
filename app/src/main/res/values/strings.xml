@@ -8,6 +8,7 @@
     <string name="device_not_supported">Device not supported</string>
     <string name="device_not_supported_message">FFmpeg is not supported on your device</string>
     <string name="run">Run</string>
+    <string name="Switch">Switch</string>
     <string name="empty_command_toast">You cannot execute empty command</string>
 
 </resources>
